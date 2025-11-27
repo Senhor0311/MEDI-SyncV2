@@ -24,6 +24,8 @@ import 'screens/specialist_inbox_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'screens/seen_patients_screen.dart';
 import 'screens/schedule_referral_screen.dart';
+import 'screens/clinic_management_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -13,10 +13,11 @@ class AuthService {
     required String name,
     required String role,
     required String phoneNumber,
+    String? specialty, // ADD THIS PARAMETER
   }) async {
     try {
       print('🔄 Starting registration for: $email');
-      
+
       // Create user in Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -38,25 +39,26 @@ class AuthService {
         'name': name,
         'role': role,
         'phoneNumber': phoneNumber,
+        if (specialty != null) 'specialty': specialty, // ADD SPECIALTY IF PROVIDED
         'createdAt': FieldValue.serverTimestamp(),
       };
 
       // Save to Firestore
       await _firestore.collection('users').doc(user.uid).set(userData);
-      
+
       print('✅ Firestore document created successfully');
       return true;
 
     } catch (e) {
       print('❌ Registration error: $e');
-      
+
       // Handle specific errors
       if (e is FirebaseAuthException) {
         print('Firebase Auth Error: ${e.code} - ${e.message}');
       } else if (e is FirebaseException) {
         print('Firestore Error: ${e.code} - ${e.message}');
       }
-      
+
       return false;
     }
   }

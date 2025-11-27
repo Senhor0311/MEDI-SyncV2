@@ -1,3 +1,4 @@
+// lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +7,7 @@ import '../models/user_model.dart';
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   UserModel? _user;
   bool _isLoading = true;
   String? _errorMessage;
@@ -43,6 +44,8 @@ class AuthProvider with ChangeNotifier {
     required String name,
     required String role,
     required String phoneNumber,
+    String? specialty,
+    String? clinicId, // NEW PARAMETER
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -50,13 +53,13 @@ class AuthProvider with ChangeNotifier {
 
     try {
       print('🔵 Starting registration for: $email');
-      
+
       // Step 1: Create user in Firebase Auth
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       print('✅ Auth user created with UID: ${credential.user!.uid}');
 
       // Step 2: Create user document in Firestore
@@ -69,33 +72,41 @@ class AuthProvider with ChangeNotifier {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
+      // Add optional fields
+      if (specialty != null && specialty.isNotEmpty) {
+        userData['specialty'] = specialty;
+      }
+      if (clinicId != null && clinicId.isNotEmpty) {
+        userData['clinicId'] = clinicId;
+      }
+
       print('🔵 Attempting to write to Firestore...');
       await _firestore.collection('users').doc(credential.user!.uid).set(userData);
       print('✅ Firestore document created successfully!');
 
       // Step 3: Load user data
       await _loadUserData(credential.user!.uid);
-      
+
       _isLoading = false;
       notifyListeners();
-      
+
       print('✅ Registration completed successfully!');
       return true;
-      
+
     } on FirebaseAuthException catch (e) {
       _errorMessage = e.message ?? 'Authentication error occurred';
       print('❌ Firebase Auth Error: ${e.code} - ${e.message}');
       _isLoading = false;
       notifyListeners();
       return false;
-      
+
     } on FirebaseException catch (e) {
       _errorMessage = e.message ?? 'Firestore error occurred';
       print('❌ Firestore Error: ${e.code} - ${e.message}');
       _isLoading = false;
       notifyListeners();
       return false;
-      
+
     } catch (e) {
       _errorMessage = 'An unexpected error occurred: $e';
       print('❌ Unexpected Error: $e');
@@ -112,14 +123,14 @@ class AuthProvider with ChangeNotifier {
 
     try {
       print('🔵 Starting sign in for: $email');
-      
+
       UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       print('✅ Sign in successful, UID: ${credential.user!.uid}');
-      
+
       final userModel = await _getUserData(credential.user!.uid);
 
       if (userModel != null) {
@@ -136,14 +147,14 @@ class AuthProvider with ChangeNotifier {
         await _auth.signOut();
         return null;
       }
-      
+
     } on FirebaseAuthException catch (e) {
       _errorMessage = e.message ?? 'Authentication error occurred';
       print('❌ Sign In Error: ${e.code} - ${e.message}');
       _isLoading = false;
       notifyListeners();
       return null;
-      
+
     } catch (e) {
       _errorMessage = 'An unexpected error occurred: $e';
       print('❌ Unexpected Error: $e');
@@ -156,9 +167,9 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadUserData(String uid) async {
     try {
       print('🔵 Loading user data for UID: $uid');
-      
+
       DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
-      
+
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         _user = UserModel.fromFirestore(data, doc.id);
@@ -167,7 +178,7 @@ class AuthProvider with ChangeNotifier {
         print('⚠️ No user document found in Firestore for UID: $uid');
         _user = null;
       }
-      
+
       notifyListeners();
     } catch (e) {
       print('❌ Error loading user data: $e');
@@ -177,7 +188,7 @@ class AuthProvider with ChangeNotifier {
   Future<UserModel?> _getUserData(String uid) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
-      
+
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         return UserModel.fromFirestore(data, doc.id);

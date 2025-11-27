@@ -1,3 +1,4 @@
+// lib/models/user_model.dart - UPDATED VERSION
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
@@ -6,7 +7,8 @@ class UserModel {
   final String email;
   final String phoneNumber;
   final String role;
-  final String? specialty; // Added specialty, explicitly nullable
+  final String? specialty;
+  final String? clinicId; // NEW FIELD
   final DateTime createdAt;
 
   UserModel({
@@ -16,6 +18,7 @@ class UserModel {
     required this.phoneNumber,
     required this.role,
     this.specialty,
+    this.clinicId, // NEW FIELD
     required this.createdAt,
   });
 
@@ -26,7 +29,8 @@ class UserModel {
       email: data['email'] ?? '',
       phoneNumber: data['phoneNumber'] ?? '',
       role: data['role'] ?? 'patient',
-      specialty: data['specialty'], // This will be null if the field doesn't exist
+      specialty: data['specialty'],
+      clinicId: data['clinicId'], // NEW FIELD
       createdAt: (data['createdAt'] as Timestamp? ?? Timestamp.now()).toDate(),
     );
   }
@@ -39,6 +43,7 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'role': role,
       if (specialty != null) 'specialty': specialty,
+      if (clinicId != null) 'clinicId': clinicId, // NEW FIELD
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
