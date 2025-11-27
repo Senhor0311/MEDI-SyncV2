@@ -1,3 +1,4 @@
+// lib/screens/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ import 'package:provider/provider.dart';
 const Color primaryColor = Color(0xFF2563EB); // blue-600
 const Color doctorColor = Color(0xFF7C3AED); // purple-600
 const Color specialistColor = Color(0xFF059669); // green-600
-const Color orangeColor = Color(0xFFF59E0B); // orange-500 (lucide orange is usually amber/orange)
+const Color orangeColor = Color(0xFFF59E0B); // orange-500
 const Color backgroundColor = Color(0xFFF9FAFB); // gray-50
 const Color cardColor = Colors.white;
 const Color textColor = Color(0xFF1F2937); // gray-800
@@ -43,7 +44,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
-     _searchController.addListener(() {
+    _searchController.addListener(() {
       setState(() {
         _searchTerm = _searchController.text;
       });
@@ -87,7 +88,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Changed from 3 to 2
+      length: 2,
       child: Scaffold(
         backgroundColor: backgroundColor,
         appBar: AppBar(
@@ -108,13 +109,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           actions: [
             IconButton(
+              icon: const Icon(Icons.local_hospital, color: Colors.white),
+              tooltip: 'Manage Clinics',
+              onPressed: () {
+                Navigator.pushNamed(context, '/clinic_management');
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.logout, color: Colors.white),
               tooltip: 'Logout',
               onPressed: () async {
                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
                 await authProvider.signOut();
                 if (mounted) {
-                  // Navigate to login screen and remove all previous routes
                   Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
                 }
               },
@@ -165,7 +172,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 1.8, // Adjust aspect ratio for better look
+        childAspectRatio: 1.8,
         children: [
           _buildStatCard(icon: Icons.people_outline, title: 'Total Users', value: _userCount.toString(), color: primaryColor),
           _buildStatCard(icon: Icons.hourglass_bottom_rounded, title: 'Active Queues', value: _activeQueueCount.toString(), color: specialistColor),
@@ -198,7 +205,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ],
               ),
             ),
-             const SizedBox(width: 8),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -222,7 +229,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-           crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('User Distribution', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
             const SizedBox(height: 16),
@@ -274,9 +281,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text("No users found."));
         }
-        
+
         var users = snapshot.data!;
-        
+
         // Filtering logic
         final filteredUsers = users.where((user) {
           final name = user.name.toLowerCase();
@@ -430,7 +437,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-
   void _showEditUserDialog(UserModel user) {
     final nameController = TextEditingController(text: user.name);
     String selectedRole = user.role;
@@ -463,7 +469,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     onChanged: (value) {
                       if (value != null) {
                         setState(() {
-                           selectedRole = value;
+                          selectedRole = value;
                         });
                       }
                     },
@@ -482,7 +488,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       'role': selectedRole,
                     });
                     Navigator.of(context).pop();
-                    _loadDashboardData(); // Refresh data
+                    _loadDashboardData();
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
                   child: const Text('Save'),
