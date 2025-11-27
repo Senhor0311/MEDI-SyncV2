@@ -5,6 +5,8 @@ import 'login_screen.dart';
 import 'home_screen.dart';
 import 'doctor_dashboard_screen.dart';
 import 'specialist_inbox_screen.dart';
+import 'admin_dashboard_screen.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         screen = const SpecialistInboxScreen();
         break;
       case 'admin':
-        screen = const DoctorDashboardScreen();
+        screen = const AdminDashboardScreen();
         break;
       case 'patient':
         screen = const HomeScreen();

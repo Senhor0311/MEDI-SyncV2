@@ -18,7 +18,8 @@ class CheckInScreenState extends State<CheckInScreen> {
   final AppointmentService _appointmentService = AppointmentService();
   bool _isLoading = false;
 
-  Future<void> _checkIn(String patientId, String doctorId, String appointmentId) async {
+  Future<void> _checkIn(
+      String patientId, String doctorId, String appointmentId) async {
     setState(() => _isLoading = true);
 
     try {
@@ -26,18 +27,23 @@ class CheckInScreenState extends State<CheckInScreen> {
       await _queueService.checkIn(patientId, doctorId);
 
       // 2. Update the appointment status to 'completed'.
-      await _appointmentService.updateAppointmentStatus(appointmentId, 'completed');
+      await _appointmentService.updateAppointmentStatus(
+          appointmentId, 'completed');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Successfully checked in!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Successfully checked in!'),
+              backgroundColor: Colors.green),
         );
         Navigator.pushReplacementNamed(context, '/queue_status');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Check-in failed: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Check-in failed: ${e.toString()}'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -47,15 +53,16 @@ class CheckInScreenState extends State<CheckInScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
-    final String formattedDate = DateFormat('EEEE, MMMM d, y').format(DateTime.now());
+    final String formattedDate =
+        DateFormat('EEEE, MMMM d, y').format(DateTime.now());
 
     if (user == null) {
-      return const Scaffold(body: Center(child: Text('Please log in to check in.')));
+      return const Scaffold(
+          body: Center(child: Text('Please log in to check in.')));
     }
 
     return Scaffold(
@@ -72,7 +79,8 @@ class CheckInScreenState extends State<CheckInScreen> {
             _buildHeader(formattedDate),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _appointmentService.getPatientAppointments(user.uid, 'scheduled'),
+                stream:
+                    _appointmentService.getPatientAppointments(user.uid, 'scheduled'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -128,7 +136,8 @@ class CheckInScreenState extends State<CheckInScreen> {
               const SizedBox(width: 8),
               const Text(
                 'Check-In to Clinic',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
               ),
             ],
           ),
@@ -137,7 +146,8 @@ class CheckInScreenState extends State<CheckInScreen> {
             children: [
               const Icon(Icons.calendar_today, color: Color(0xFFBFDBFE), size: 16),
               const SizedBox(width: 8),
-              Text(formattedDate, style: const TextStyle(fontSize: 14, color: Color(0xFFBFDBFE))),
+              Text(formattedDate,
+                  style: const TextStyle(fontSize: 14, color: Color(0xFFBFDBFE))),
             ],
           ),
         ],
@@ -145,7 +155,10 @@ class CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
-  Widget _buildCheckInCard(String userId, AppointmentModel appointment, Map<String, dynamic> details) {
+  Widget _buildCheckInCard(String userId,
+      AppointmentModel appointment, Map<String, dynamic> details) {
+    final isSpecialist = details['doctorRole'] == 'specialist';
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -162,18 +175,27 @@ class CheckInScreenState extends State<CheckInScreen> {
             const SizedBox(height: 8),
             Text('at ${details['clinicName'] ?? 'the clinic'}'),
             const SizedBox(height: 20),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () => _checkIn(userId, appointment.doctorId, appointment.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Check In Now'),
-                  ),
+            if (isSpecialist)
+              const Text(
+                'Check-in for specialist appointments is not required. Please proceed to the clinic at your scheduled time.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.blueGrey, fontSize: 14),
+              )
+            else if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: () =>
+                    _checkIn(userId, appointment.doctorId, appointment.id),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Check In Now'),
+              ),
           ],
         ),
       ),

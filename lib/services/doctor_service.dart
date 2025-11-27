@@ -3,7 +3,8 @@ import 'package:medisync/models/user_model.dart';
 
 class DoctorService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CollectionReference _usersCollection = FirebaseFirestore.instance.collection('users');
+  final CollectionReference _usersCollection =
+      FirebaseFirestore.instance.collection('users');
 
   /// Fetches a stream of all doctors.
   Stream<List<UserModel>> getDoctors() {
@@ -11,14 +12,17 @@ class DoctorService {
         .where('role', isEqualTo: 'doctor') // Fetch only doctors
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
+      return snapshot.docs
+          .map((doc) =>
+              UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
     });
   }
 
-  /// Fetches a stream of all doctors and specialists for a specific clinic.
+  /// Fetches a stream of all doctors for a specific clinic.
   Stream<List<UserModel>> getDoctorsByClinic(String clinicId) {
     return _usersCollection
-        .where('role', whereIn: ['doctor', 'specialist'])
+        .where('role', isEqualTo: 'doctor') // Fetch only doctors
         .where('clinicId', isEqualTo: clinicId)
         .snapshots()
         .map((snapshot) {
@@ -35,16 +39,20 @@ class DoctorService {
         .where('role', isEqualTo: 'specialist') // Fetch only specialists
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
+      return snapshot.docs
+          .map((doc) =>
+              UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
     });
   }
-
 
   /// Gets a stream of the total number of appointments scheduled for a doctor today.
   Stream<int> getTotalAppointmentsToday(String doctorId) {
     final now = DateTime.now();
-    final startOfToday = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
-    final endOfToday = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
+    final startOfToday =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfToday =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
 
     return _firestore
         .collection('appointments')
@@ -58,8 +66,10 @@ class DoctorService {
   /// Gets a stream of the number of completed appointments for a doctor today.
   Stream<int> getCompletedAppointmentsToday(String doctorId) {
     final now = DateTime.now();
-    final startOfToday = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
-    final endOfToday = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
+    final startOfToday =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfToday =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
 
     return _firestore
         .collection('appointments')
