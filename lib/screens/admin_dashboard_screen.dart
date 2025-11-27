@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:medisync/models/clinic_model.dart';
 import 'package:medisync/models/user_model.dart';
 import 'package:medisync/providers/auth_provider.dart';
 import 'package:medisync/services/admin_service.dart';
+import 'package:medisync/services/clinic_service.dart';
 import 'package:provider/provider.dart';
 
 // Matching the color palette from the React example
@@ -26,19 +28,20 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final AdminService _adminService = AdminService();
+  final ClinicService _clinicService = ClinicService();
 
   // State variables for data
   int _userCount = 0;
   int _activeQueueCount = 0;
   int _referralCount = 0;
   int _appointmentsToday = 0;
+  int _clinicCount = 0;
   Map<String, int> _userDistribution = {};
 
   // State for Users Tab
   String _searchTerm = '';
   String _filterRole = 'all';
   final TextEditingController _searchController = TextEditingController();
-
 
   @override
   void initState() {
@@ -65,6 +68,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _adminService.getReferralCount(),
         _adminService.getUserDistribution(),
         _adminService.getAppointmentsTodayCount(),
+        _adminService.getClinicCount(),
       ]);
 
       if (mounted) {
@@ -74,12 +78,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _referralCount = results[2] as int;
           _userDistribution = results[3] as Map<String, int>;
           _appointmentsToday = results[4] as int;
+          _clinicCount = results[5] as int;
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load dashboard data: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Failed to load dashboard data: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -99,30 +106,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text(
                 'Admin Dashboard',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white),
               ),
               Text(
-                'MedSync System Administration',
+                'Medi-Sync System Administration',
                 style: TextStyle(fontSize: 12, color: Color(0xFFDBEAFE)),
               ),
             ],
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.local_hospital, color: Colors.white),
-              tooltip: 'Manage Clinics',
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.green,
+              ),
               onPressed: () {
                 Navigator.pushNamed(context, '/clinic_management');
               },
+              child: const Text('Clinics'),
             ),
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.white),
               tooltip: 'Logout',
               onPressed: () async {
-                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final authProvider =
+                    Provider.of<AuthProvider>(context, listen: false);
                 await authProvider.signOut();
                 if (mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/login', (route) => false);
                 }
               },
             ),
@@ -133,8 +145,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             indicatorColor: Colors.white,
             indicatorWeight: 3.0,
             tabs: const [
-              Tab(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.dashboard_rounded), SizedBox(width: 8), Text('Overview')])),
-              Tab(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.people_alt_rounded), SizedBox(width: 8), Text('Users')])),
+              Tab(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                    Icon(Icons.dashboard_rounded),
+                    SizedBox(width: 8),
+                    Text('Overview')
+                  ])),
+              Tab(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                    Icon(Icons.people_alt_rounded),
+                    SizedBox(width: 8),
+                    Text('Users')
+                  ])),
             ],
           ),
         ),
@@ -165,7 +189,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildStatsGrid() {
     return LayoutBuilder(builder: (context, constraints) {
-      final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+      final crossAxisCount = constraints.maxWidth > 800 ? 5 : 2;
       return GridView.count(
         crossAxisCount: crossAxisCount,
         shrinkWrap: true,
@@ -174,47 +198,86 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         crossAxisSpacing: 16,
         childAspectRatio: 1.8,
         children: [
-          _buildStatCard(icon: Icons.people_outline, title: 'Total Users', value: _userCount.toString(), color: primaryColor),
-          _buildStatCard(icon: Icons.hourglass_bottom_rounded, title: 'Active Queues', value: _activeQueueCount.toString(), color: specialistColor),
-          _buildStatCard(icon: Icons.calendar_today_rounded, title: 'Appointments Today', value: _appointmentsToday.toString(), color: doctorColor),
-          _buildStatCard(icon: Icons.assignment_turned_in_outlined, title: 'Pending Referrals', value: _referralCount.toString(), color: orangeColor),
+          _buildStatCard(
+              icon: Icons.people_outline,
+              title: 'Total Users',
+              value: _userCount.toString(),
+              color: primaryColor),
+          _buildStatCard(
+              icon: Icons.hourglass_bottom_rounded,
+              title: 'Active Queues',
+              value: _activeQueueCount.toString(),
+              color: specialistColor),
+          _buildStatCard(
+              icon: Icons.calendar_today_rounded,
+              title: 'Appointments Today',
+              value: _appointmentsToday.toString(),
+              color: doctorColor),
+          _buildStatCard(
+              icon: Icons.assignment_turned_in_outlined,
+              title: 'Pending Referrals',
+              value: _referralCount.toString(),
+              color: orangeColor),
+          _buildStatCard(
+            icon: Icons.local_hospital,
+            title: 'Total Clinics',
+            value: _clinicCount.toString(),
+            color: Colors.teal,
+            onTap: () {
+              Navigator.pushNamed(context, '/clinic_management');
+            },
+          ),
         ],
       );
     });
   }
 
-  Widget _buildStatCard({required IconData icon, required String title, required String value, required Color color}) {
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black.withAlpha(26),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(title, style: TextStyle(fontSize: 14, color: subTextColor), overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: textColor)),
-                ],
+  Widget _buildStatCard(
+      {required IconData icon,
+      required String title,
+      required String value,
+      required Color color,
+      VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 2,
+        shadowColor: Colors.black.withAlpha(26),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(title,
+                        style: TextStyle(fontSize: 14, color: subTextColor),
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text(value,
+                        style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: textColor)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withAlpha(26),
-                shape: BoxShape.circle,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(26),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 28, color: color),
               ),
-              child: Icon(icon, size: 28, color: color),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -231,7 +294,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('User Distribution', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+            Text('User Distribution',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: textColor)),
             const SizedBox(height: 16),
             SizedBox(
               height: 300,
@@ -243,7 +310,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       value: entry.value.toDouble(),
                       title: '${entry.key}\n${entry.value}',
                       radius: 100,
-                      titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                      titleStyle: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     );
                   }).toList(),
                   sectionsSpace: 2,
@@ -275,7 +343,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return StreamBuilder<List<UserModel>>(
       stream: _adminService.getAllUsers(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -387,20 +456,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user.name, style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 16)),
-                      Text(user.email, style: TextStyle(color: subTextColor, fontSize: 14)),
+                      Text(user.name,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              fontSize: 16)),
+                      Text(user.email,
+                          style: TextStyle(color: subTextColor, fontSize: 14)),
+                      if ((user.role == 'doctor' || user.role == 'specialist') &&
+                          user.clinicId != null)
+                        FutureBuilder<String>(
+                          future: _clinicService.getClinicName(user.clinicId!),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('Loading clinic...',
+                                  style: TextStyle(
+                                      color: subTextColor, fontSize: 12));
+                            }
+                            if (snapshot.hasData) {
+                              return Text('Clinic: ${snapshot.data}',
+                                  style: const TextStyle(
+                                      color: subTextColor, fontSize: 12));
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getColorForRole(user.role).withAlpha(38),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     user.role,
-                    style: TextStyle(color: _getColorForRole(user.role), fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(
+                        color: _getColorForRole(user.role),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
                   ),
                 )
               ],
@@ -425,7 +522,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: const Icon(Icons.delete, size: 18),
                       label: const Text('Delete'),
                       onPressed: () => _adminService.deleteUser(user.uid),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red.shade600),
+                      style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.shade600),
                     ),
                   ],
                 )
@@ -440,6 +538,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _showEditUserDialog(UserModel user) {
     final nameController = TextEditingController(text: user.name);
     String selectedRole = user.role;
+    String? selectedClinicId = user.clinicId;
 
     showDialog(
       context: context,
@@ -447,23 +546,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               title: const Text('Edit User'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'Name', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: selectedRole,
-                    decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'Role', border: OutlineInputBorder()),
                     items: const [
                       DropdownMenuItem(value: 'patient', child: Text('Patient')),
                       DropdownMenuItem(value: 'doctor', child: Text('Doctor')),
-                      DropdownMenuItem(value: 'specialist', child: Text('Specialist')),
+                      DropdownMenuItem(
+                          value: 'specialist', child: Text('Specialist')),
                       DropdownMenuItem(value: 'admin', child: Text('Admin')),
                     ],
                     onChanged: (value) {
@@ -473,7 +576,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         });
                       }
                     },
-                  )
+                  ),
+                  if (selectedRole == 'doctor' ||
+                      selectedRole == 'specialist') ...[
+                    const SizedBox(height: 16),
+                    StreamBuilder<List<ClinicModel>>(
+                      stream: _clinicService.getClinics(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        final clinics = snapshot.data!;
+                        return DropdownButtonFormField<String>(
+                          value: selectedClinicId,
+                          decoration: const InputDecoration(
+                              labelText: 'Clinic', border: OutlineInputBorder()),
+                          items: clinics.map((clinic) {
+                            return DropdownMenuItem(
+                                value: clinic.id, child: Text(clinic.name));
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedClinicId = value;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
               actions: [
@@ -486,11 +617,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _adminService.updateUser(user.uid, {
                       'name': nameController.text,
                       'role': selectedRole,
+                      if (selectedRole == 'doctor' ||
+                          selectedRole == 'specialist')
+                        'clinicId': selectedClinicId,
                     });
                     Navigator.of(context).pop();
                     _loadDashboardData();
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white),
                   child: const Text('Save'),
                 ),
               ],

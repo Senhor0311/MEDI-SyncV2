@@ -70,6 +70,7 @@ class _ScheduleReferralScreenState extends State<ScheduleReferralScreen> {
         await _appointmentService.createAppointment(
           patientId: referral.patientId,
           doctorId: referral.toSpecialistId,
+          clinicId: referral.clinicId,
           dateTime: finalDateTime,
           reason: 'Follow-up for referral: ${referral.reason}',
           referralId: referral.id,

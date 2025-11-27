@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:medisync/models/clinic_model.dart';
 import 'package:medisync/models/user_model.dart';
 import 'package:medisync/providers/auth_provider.dart';
 import 'package:medisync/services/appointment_service.dart';
+import 'package:medisync/services/clinic_service.dart';
 import 'package:medisync/services/doctor_service.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +19,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   final _formKey = GlobalKey<FormState>();
   final DoctorService _doctorService = DoctorService();
   final AppointmentService _appointmentService = AppointmentService();
+  final ClinicService _clinicService = ClinicService();
 
+  String? _selectedClinicId;
   String? _selectedDoctorId;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -30,7 +34,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-        builder: (context, child) {
+      builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
@@ -54,7 +58,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-       builder: (context, child) {
+      builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
@@ -100,20 +104,25 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         await _appointmentService.createAppointment(
           patientId: patientId,
           doctorId: _selectedDoctorId!,
+          clinicId: _selectedClinicId!,
           dateTime: finalDateTime,
           reason: _reasonController.text,
         );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Appointment booked successfully!'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('Appointment booked successfully!'),
+                backgroundColor: Colors.green),
           );
           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to book appointment: $e'), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text('Failed to book appointment: $e'),
+                backgroundColor: Colors.red),
           );
         }
       } finally {
@@ -128,7 +137,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-         decoration: const BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -137,9 +146,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         ),
         child: SafeArea(
           child: Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _buildHeader(context),
+              _buildHeader(context),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
@@ -149,7 +158,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 16),
-                        _buildDoctorSelector(),
+                        _buildClinicAndDoctorSelector(),
                         const SizedBox(height: 24),
                         _buildDateTimePicker(),
                         const SizedBox(height: 24),
@@ -197,32 +206,76 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     );
   }
 
-  Widget _buildDoctorSelector() {
-    return StreamBuilder<List<UserModel>>(
-      stream: _doctorService.getDoctors(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final doctors = snapshot.data!;
-        return DropdownButtonFormField<String>(
-          value: _selectedDoctorId,
-          hint: const Text('Select a Doctor'),
-          decoration: InputDecoration(
-            labelText: 'Doctor',
-            labelStyle: const TextStyle(color: Color(0xFF1E3A8A)),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
+  Widget _buildClinicAndDoctorSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        StreamBuilder<List<ClinicModel>>(
+          stream: _clinicService.getClinics(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final clinics = snapshot.data!;
+            return DropdownButtonFormField<String>(
+              value: _selectedClinicId,
+              hint: const Text('Select a Clinic'),
+              decoration: InputDecoration(
+                labelText: 'Clinic',
+                labelStyle: const TextStyle(color: Color(0xFF1E3A8A)),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: clinics.map((clinic) {
+                return DropdownMenuItem(value: clinic.id, child: Text(clinic.name));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedClinicId = value;
+                  _selectedDoctorId = null; // Reset doctor selection
+                });
+              },
+              validator: (value) => value == null ? 'Please select a clinic' : null,
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        if (_selectedClinicId != null)
+          StreamBuilder<List<UserModel>>(
+            stream: _doctorService.getDoctorsByClinic(_selectedClinicId!),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final doctors = snapshot.data!;
+              return DropdownButtonFormField<String>(
+                value: _selectedDoctorId,
+                hint: const Text('Select a Doctor'),
+                decoration: InputDecoration(
+                  labelText: 'Doctor',
+                  labelStyle: const TextStyle(color: Color(0xFF1E3A8A)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: doctors.map((doctor) {
+                  return DropdownMenuItem(
+                      value: doctor.uid, child: Text(doctor.name));
+                }).toList(),
+                onChanged: (value) => setState(() => _selectedDoctorId = value),
+                validator: (value) =>
+                    value == null ? 'Please select a doctor' : null,
+              );
+            },
           ),
-          items: doctors.map((doctor) {
-            return DropdownMenuItem(value: doctor.uid, child: Text(doctor.name));
-          }).toList(),
-          onChanged: (value) => setState(() => _selectedDoctorId = value),
-          validator: (value) => value == null ? 'Please select a doctor' : null,
-        );
-      },
+      ],
     );
   }
 
@@ -244,7 +297,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                 ),
               ),
               child: Text(
-                _selectedDate != null ? DateFormat.yMMMd().format(_selectedDate!) : 'Select Date',
+                _selectedDate != null
+                    ? DateFormat.yMMMd().format(_selectedDate!)
+                    : 'Select Date',
                 style: const TextStyle(color: Color(0xFF1E3A8A)),
               ),
             ),
@@ -266,9 +321,11 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                 ),
               ),
               child: Text(
-                _selectedTime != null ? _selectedTime!.format(context) : 'Select Time',
-                 style: const TextStyle(color: Color(0xFF1E3A8A)),
-                ),
+                _selectedTime != null
+                    ? _selectedTime!.format(context)
+                    : 'Select Time',
+                style: const TextStyle(color: Color(0xFF1E3A8A)),
+              ),
             ),
           ),
         ),
@@ -291,7 +348,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         ),
       ),
       maxLines: 3,
-      validator: (value) => (value == null || value.isEmpty) ? 'Please enter a reason' : null,
+      validator: (value) =>
+          (value == null || value.isEmpty) ? 'Please enter a reason' : null,
     );
   }
 
@@ -301,17 +359,16 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         : ElevatedButton(
             onPressed: _submit,
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              )
-            ),
+                minimumSize: const Size(double.infinity, 52),
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                )),
             child: const Text('Book Appointment'),
           );
   }

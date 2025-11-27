@@ -1,4 +1,4 @@
-// lib/models/user_model.dart - UPDATED VERSION
+// lib/models/user_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
@@ -8,7 +8,7 @@ class UserModel {
   final String phoneNumber;
   final String role;
   final String? specialty;
-  final String? clinicId; // NEW FIELD
+  final String? clinicId;
   final DateTime createdAt;
 
   UserModel({
@@ -18,7 +18,7 @@ class UserModel {
     required this.phoneNumber,
     required this.role,
     this.specialty,
-    this.clinicId, // NEW FIELD
+    this.clinicId,
     required this.createdAt,
   });
 
@@ -30,7 +30,7 @@ class UserModel {
       phoneNumber: data['phoneNumber'] ?? '',
       role: data['role'] ?? 'patient',
       specialty: data['specialty'],
-      clinicId: data['clinicId'], // NEW FIELD
+      clinicId: data['clinicId'],
       createdAt: (data['createdAt'] as Timestamp? ?? Timestamp.now()).toDate(),
     );
   }
@@ -43,8 +43,16 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'role': role,
       if (specialty != null) 'specialty': specialty,
-      if (clinicId != null) 'clinicId': clinicId, // NEW FIELD
+      if (clinicId != null) 'clinicId': clinicId,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserModel && runtimeType == other.runtimeType && uid == other.uid;
+
+  @override
+  int get hashCode => uid.hashCode;
 }

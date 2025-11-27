@@ -17,7 +17,7 @@ class _CreateReferralScreenState extends State<CreateReferralScreen> {
   final ReferralService _referralService = ReferralService();
   final DoctorService _doctorService = DoctorService();
 
-  String? _selectedSpecialistId;
+  UserModel? _selectedSpecialist;
   String _priority = 'Medium';
   final TextEditingController _reasonController = TextEditingController();
   bool _isLoading = false;
@@ -30,7 +30,8 @@ class _CreateReferralScreenState extends State<CreateReferralScreen> {
         await _referralService.createReferral(
           patientId: patientId,
           fromDoctorId: fromDoctorId,
-          toSpecialistId: _selectedSpecialistId!,
+          toSpecialistId: _selectedSpecialist!.uid,
+          clinicId: _selectedSpecialist!.clinicId!,
           reason: _reasonController.text,
           priority: _priority,
         );
@@ -144,17 +145,17 @@ class _CreateReferralScreenState extends State<CreateReferralScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final specialists = snapshot.data!;
-        return DropdownButtonFormField<String>(
-          value: _selectedSpecialistId,
+        return DropdownButtonFormField<UserModel>(
+          value: _selectedSpecialist,
           hint: const Text('Select a Specialist'),
           decoration: const InputDecoration(labelText: 'To Specialist'),
           items: specialists.map((specialist) {
             return DropdownMenuItem(
-              value: specialist.uid,
+              value: specialist,
               child: Text('${specialist.name} - ${specialist.specialty ?? 'Specialist'}'),
             );
           }).toList(),
-          onChanged: (value) => setState(() => _selectedSpecialistId = value),
+          onChanged: (value) => setState(() => _selectedSpecialist = value),
           validator: (value) => value == null ? 'Please select a specialist' : null,
         );
       },

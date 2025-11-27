@@ -4,6 +4,7 @@ class AppointmentModel {
   final String id;
   final String patientId;
   final String doctorId;
+  final String clinicId;
   final DateTime dateTime;
   final String status;
   final String? reason;
@@ -14,6 +15,7 @@ class AppointmentModel {
     required this.id,
     required this.patientId,
     required this.doctorId,
+    required this.clinicId,
     required this.dateTime,
     required this.status,
     this.reason,
@@ -38,6 +40,7 @@ class AppointmentModel {
       id: doc.id,
       patientId: data['patientId'] ?? '',
       doctorId: data['doctorId'] ?? '',
+      clinicId: data['clinicId'] ?? '',
       dateTime: parseTimestamp(data['dateTime']),
       status: data['status'] ?? 'scheduled',
       reason: data['reason'],
@@ -50,6 +53,7 @@ class AppointmentModel {
     return <String, dynamic>{
       'patientId': patientId,
       'doctorId': doctorId,
+      'clinicId': clinicId,
       'dateTime': Timestamp.fromDate(dateTime),
       'status': status,
       if (reason != null) 'reason': reason,

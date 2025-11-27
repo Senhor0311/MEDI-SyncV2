@@ -14,7 +14,7 @@ import 'screens/home_screen.dart';
 import 'screens/checkin_screen.dart';
 import 'screens/queue_status_screen.dart';
 import 'screens/appointments_screen.dart';
-import 'screens/book_appointment_screen.dart'; // Import the new screen
+import 'screens/book_appointment_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/medical_records_screen.dart';
 import 'screens/doctor_dashboard_screen.dart';
@@ -25,7 +25,6 @@ import 'screens/admin_dashboard_screen.dart';
 import 'screens/seen_patients_screen.dart';
 import 'screens/schedule_referral_screen.dart';
 import 'screens/clinic_management_screen.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +59,7 @@ class MediSyncApp extends StatelessWidget {
           '/checkin': (_) => const CheckInScreen(),
           '/queue_status': (_) => const QueueStatusScreen(),
           '/appointments': (_) => const AppointmentsScreen(),
-          '/book_appointment': (_) => const BookAppointmentScreen(), // Add the new route
+          '/book_appointment': (_) => const BookAppointmentScreen(),
           '/profile': (_) => const ProfileScreen(),
           '/medical_records': (_) => const MedicalRecordsScreen(),
           '/doctor_dashboard': (_) => const DoctorDashboardScreen(),
@@ -70,6 +69,7 @@ class MediSyncApp extends StatelessWidget {
           '/admin_dashboard': (_) => const AdminDashboardScreen(),
           '/seen_patients': (_) => const SeenPatientsScreen(),
           '/schedule_referral': (_) => const ScheduleReferralScreen(),
+          '/clinic_management': (_) => const ClinicManagementScreen(),
         },
       ),
     );

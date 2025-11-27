@@ -13,6 +13,7 @@ class ReferralService {
     required String patientId,
     required String fromDoctorId,
     required String toSpecialistId,
+    required String clinicId,
     required String reason,
     required String priority,
   }) async {
@@ -20,6 +21,7 @@ class ReferralService {
       'patientId': patientId,
       'fromDoctorId': fromDoctorId,
       'toSpecialistId': toSpecialistId,
+      'clinicId': clinicId,
       'reason': reason,
       'priority': priority,
       'status': 'pending', // Referrals are always pending when created.

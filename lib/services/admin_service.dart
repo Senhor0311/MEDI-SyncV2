@@ -33,6 +33,11 @@ class AdminService {
     return snapshot.count ?? 0;
   }
 
+  Future<int> getClinicCount() async {
+    final snapshot = await _firestore.collection('clinics').count().get();
+    return snapshot.count ?? 0;
+  }
+
   Future<Map<String, int>> getUserDistribution() async {
     final snapshot = await _firestore.collection('users').get();
     final distribution = <String, int>{

@@ -9,6 +9,7 @@ class ReferralModel {
   final String reason;
   final String priority;
   final String status;
+  final String clinicId;
   final DateTime createdAt;
 
   ReferralModel({
@@ -19,6 +20,7 @@ class ReferralModel {
     required this.reason,
     required this.priority,
     required this.status,
+    required this.clinicId,
     required this.createdAt,
   });
 
@@ -33,6 +35,7 @@ class ReferralModel {
       reason: data['reason'] ?? 'No reason provided.',
       priority: data['priority'] ?? 'Medium',
       status: data['status'] ?? 'pending',
+      clinicId: data['clinicId'] ?? '',
       createdAt: (data['createdAt'] as Timestamp? ?? Timestamp.now()).toDate(),
     );
   }
@@ -46,6 +49,7 @@ class ReferralModel {
       'reason': reason,
       'priority': priority,
       'status': status,
+      'clinicId': clinicId,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

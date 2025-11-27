@@ -7,11 +7,13 @@ class AppointmentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CollectionReference _usersCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference _appointmentsCollection = FirebaseFirestore.instance.collection('appointments');
+  final CollectionReference _clinicsCollection = FirebaseFirestore.instance.collection('clinics');
 
   /// Creates a new appointment.
   Future<void> createAppointment({
     required String patientId,
     required String doctorId,
+    required String clinicId,
     required DateTime dateTime,
     required String reason,
     String? referralId,
@@ -19,6 +21,7 @@ class AppointmentService {
     await _appointmentsCollection.add({
       'patientId': patientId,
       'doctorId': doctorId,
+      'clinicId': clinicId,
       'dateTime': Timestamp.fromDate(dateTime),
       'reason': reason,
       'status': 'scheduled',
@@ -81,11 +84,20 @@ class AppointmentService {
     }
     final doctor = UserModel.fromFirestore(doctorDoc.data() as Map<String, dynamic>, doctorDoc.id);
 
+    String clinicName = 'N/A';
+    if (appointment.clinicId != null) {
+      final clinicDoc = await _clinicsCollection.doc(appointment.clinicId).get();
+      if (clinicDoc.exists) {
+        clinicName = clinicDoc['name'];
+      }
+    }
+
     return {
       'appointment': appointment,
       'doctorName': doctor.name,
       'doctorSpecialty': doctor.specialty ?? 'General Practice',
       'doctorRole': doctor.role,
+      'clinicName': clinicName,
     };
   }
 }

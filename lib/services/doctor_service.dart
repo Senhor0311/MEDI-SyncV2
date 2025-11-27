@@ -15,6 +15,20 @@ class DoctorService {
     });
   }
 
+  /// Fetches a stream of all doctors and specialists for a specific clinic.
+  Stream<List<UserModel>> getDoctorsByClinic(String clinicId) {
+    return _usersCollection
+        .where('role', whereIn: ['doctor', 'specialist'])
+        .where('clinicId', isEqualTo: clinicId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) =>
+              UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    });
+  }
+
   /// Fetches a stream of all specialists.
   Stream<List<UserModel>> getSpecialists() {
     return _usersCollection
