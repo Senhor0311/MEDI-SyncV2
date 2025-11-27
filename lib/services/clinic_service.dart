@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:medisync_v2/models/clinic_model.dart';
+import 'package:medisync/models/clinic_model.dart';
 
 class ClinicService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

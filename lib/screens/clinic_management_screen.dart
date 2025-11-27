@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:medisync_v2/models/clinic_model.dart';
-import 'package:medisync_v2/services/clinic_service.dart';
+import 'package:medisync/models/clinic_model.dart';
+import 'package:medisync/services/clinic_service.dart';
 
 class ClinicManagementScreen extends StatefulWidget {
   const ClinicManagementScreen({super.key});
